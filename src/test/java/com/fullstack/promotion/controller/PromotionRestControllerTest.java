@@ -1,39 +1,32 @@
 package com.fullstack.promotion.controller;
 
-import io.netty.channel.ChannelOption;
-import io.netty.handler.timeout.ReadTimeoutHandler;
-import io.netty.handler.timeout.WriteTimeoutHandler;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.netty.http.client.HttpClient;
+import reactor.core.publisher.Mono;
 
-import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 
-@SpringBootTest
+@SpringBootTest(webEnvironment =  SpringBootTest.WebEnvironment.DEFINED_PORT)
 class PromotionRestControllerTest {
 
-    @Test
-    public void sendEmailTest(){
-        HttpClient httpClient = HttpClient.create()
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 20000)
-                .responseTimeout(Duration.ofMillis(20000))
-                .doOnConnected(conn ->
-                        conn.addHandlerLast(new ReadTimeoutHandler(10000, TimeUnit.MILLISECONDS))
-                                .addHandlerLast(new WriteTimeoutHandler(10000, TimeUnit.MILLISECONDS)));
+    private WebClient webClient;
 
-        WebClient.builder()
-                .clientConnector(new ReactorClientHttpConnector(httpClient))
-                .baseUrl("http://127.0.0.1:8080/api/$birthdate")
-                .build()
-                .get()
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
-
-        System.out.println("======================");
+    @BeforeEach
+    public void before(){
+        this.webClient = WebClient.builder()
+                .baseUrl("http://localhost:8080")
+                .build();
     }
 
+    @Test
+    void sendBirthdayMessage() {
+        Mono<String> s = webClient.get()
+                .uri("/api/$birthdate")
+                .retrieve()
+                .bodyToMono(String.class);
+        s.block();
+
+//        assertEquals("ok",s.block());
+    }
 }
